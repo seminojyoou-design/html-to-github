@@ -390,8 +390,20 @@ function parseRepoTag(text) {
 }
 
 // ===== スマホ文字化け修正 =====
-function fixCode() {
+async function fixCode() {
   const textarea = document.getElementById('htmlInput');
+  // テキストエリアが空ならクリップボードから自動ペースト
+  if (!textarea.value.trim()) {
+    try {
+      const clip = await navigator.clipboard.readText();
+      if (clip && clip.trim()) {
+        textarea.value = clip;
+      }
+    } catch (e) {
+      showToast('先にHTMLを貼り付けてな！');
+      return;
+    }
+  }
   let code = textarea.value;
   if (!code.trim()) return;
 
