@@ -317,6 +317,11 @@ input:focus { outline: none; border-color: #58a6ff; }
   <iframe class="preview-frame" id="previewFrame" sandbox="allow-scripts"></iframe>
 </div>
 
+<!-- リセット -->
+<div style="text-align:center; margin-top:8px;">
+  <button class="btn btn-secondary" onclick="resetAll()" style="width:auto; padding:10px 24px; background:#da3633; font-size:13px;">🗑️ 全リセット</button>
+</div>
+
 <!-- トースト -->
 <div class="prompt-toast" id="toast">コピーしたで！</div>
 
@@ -633,6 +638,19 @@ function copyUrl(url) {
   navigator.clipboard.writeText(url).then(() => {
     showToast('URLコピーしたで！');
   });
+}
+
+function resetAll() {
+  document.getElementById('htmlInput').value = '';
+  document.getElementById('repoName').value = '';
+  document.getElementById('fixCount').textContent = '';
+  document.getElementById('parsedInfo').style.display = 'none';
+  document.getElementById('status').className = 'status';
+  document.getElementById('status').innerHTML = '';
+  document.getElementById('urlBox').style.display = 'none';
+  document.getElementById('previewFrame').srcdoc = '';
+  updateSteps(1);
+  showToast('リセットしたで！');
 }
 
 function preview() {
