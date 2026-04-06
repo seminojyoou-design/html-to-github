@@ -276,7 +276,7 @@ input:focus { outline: none; border-color: #58a6ff; }
 
 ---repo: my-app-name---
 の形式が含まれてたら自動でリポジトリ名を分離するで！"></textarea>
-  <button class="btn btn-fix" onclick="fixCode()">🔧 コード修正＆自動分離＆ペースト</button>
+  <button class="btn btn-fix" onclick="fixCode()">🔧 コード修正＆自動分離</button>
   <div class="fix-count" id="fixCount"></div>
   <div class="parsed-info" id="parsedInfo"></div>
   <button class="btn btn-secondary" onclick="resetAll()" style="background:#da3633; margin-top:8px;">🗑️ 全リセット</button>
@@ -390,22 +390,14 @@ function parseRepoTag(text) {
 }
 
 // ===== スマホ文字化け修正 =====
-async function fixCode() {
+function fixCode() {
   const textarea = document.getElementById('htmlInput');
-  // テキストエリアが空ならクリップボードから自動ペースト
-  if (!textarea.value.trim()) {
-    try {
-      const clip = await navigator.clipboard.readText();
-      if (clip && clip.trim()) {
-        textarea.value = clip;
-      }
-    } catch (e) {
-      showToast('先にHTMLを貼り付けてな！');
-      return;
-    }
-  }
   let code = textarea.value;
-  if (!code.trim()) return;
+  if (!code.trim()) {
+    textarea.focus();
+    showToast('HTMLを貼り付けてな！');
+    return;
+  }
 
   let count = 0;
   const fixes = [
