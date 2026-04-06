@@ -355,15 +355,18 @@ function showToast(msg) {
 
 // ===== Claudeプロンプトコピー =====
 function copyPrompt() {
-  const prompt = `コードの最初の行に以下の形式でリポジトリ名をつけてください：
----repo: リポジトリ名---
+  const prompt = `【絶対ルール】出力の1行目に必ず ---repo: リポジトリ名--- を書け。説明不要、この形式を厳守。2行目から<!DOCTYPE html>で始めること。
 
 リポジトリ名のルール：
-- 英語、小文字、ハイフン区切り
+- 英語・小文字・ハイフン区切りのみ（日本語・記号・スペース禁止）
 - 短く、アプリの内容がわかる名前
 - 例: ---repo: pixel-art-editor---
 
-その後に<!DOCTYPE html>から始めてください。`;
+出力例：
+---repo: todo-app---
+<!DOCTYPE html>
+<html>
+...`;
 
   navigator.clipboard.writeText(prompt).then(() => {
     showToast('📋 プロンプトコピーしたで！');
