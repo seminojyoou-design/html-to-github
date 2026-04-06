@@ -560,43 +560,61 @@ async function upload() {
     const user = await ghFetch('/user');
     const username = user.login;
 
-    // 2. リポジトリ作成（auto_init: trueでmainブランチを確実に作る）
-    showStatus('info', '<span class="spinner"></span>リポジトリ作成中...');
-    await ghFetch('/user/repos', {
-      method: 'POST',
-      body: JSON.stringify({
-        name: repoName,
-        description: 'Created with HTML→GitHub Uploader',
-        auto_init: true,
-        private: false
-      })
-    });
+    // 2. リポジトリ作成（既に存在してたらスキップ）
+    showStatus('info', '<span class="spinner"></span>リポジトリ確認中...');
+    let isNew = false;
+    try {
+      await ghFetch('/user/repos', {
+        method: 'POST',
+        body: JSON.stringify({
+          name: repoName,
+          description: 'Created with HTML→GitHub Uploader',
+          auto_init: true,
+          private: false
+        })
+      });
+      isNew = true;
+      await new Promise(r => setTimeout(r, 1500));
+    } catch (e) {
+      if (e.message.includes('already exists')) {
+        showStatus('info', '<span class="spinner"></span>既存リポジトリに上書き中...');
+      } else {
+        throw e;
+      }
+    }
 
-    // 少し待ってからファイルPUT（リポジトリ初期化完了を待つ）
-    await new Promise(r => setTimeout(r, 1500));
-
-    // 3. index.htmlをプッシュ（既存のREADMEのSHAは不要、新規ファイル）
+    // 3. index.htmlをプッシュ（既存なら上書き）
     showStatus('info', '<span class="spinner"></span>ファイルアップロード中...');
     const content = btoa(unescape(encodeURIComponent(code)));
+    let sha = null;
+    if (!isNew) {
+      try {
+        const existing = await ghFetch(`/repos/${username}/${repoName}/contents/index.html`);
+        sha = existing.sha;
+      } catch (e) {}
+    }
+    const putBody = {
+      message: isNew ? 'Initial upload via HTML→GitHub' : 'Update via HTML→GitHub',
+      content: content
+    };
+    if (sha) putBody.sha = sha;
     await ghFetch(`/repos/${username}/${repoName}/contents/index.html`, {
       method: 'PUT',
-      body: JSON.stringify({
-        message: 'Upload via HTML→GitHub',
-        content: content
-      })
+      body: JSON.stringify(putBody)
     });
 
     // 4. GitHub Pages有効化 + ビルドトリガー
     showStatus('info', '<span class="spinner"></span>GitHub Pages有効化中...');
     try {
-      await ghFetch(`/repos/${username}/${repoName}/pages`, {
-        method: 'POST',
-        body: JSON.stringify({
-          build_type: 'legacy',
-          source: { branch: 'main', path: '/' }
-        })
-      });
-      // ビルドを明示的にトリガー
+      if (isNew) {
+        await ghFetch(`/repos/${username}/${repoName}/pages`, {
+          method: 'POST',
+          body: JSON.stringify({
+            build_type: 'legacy',
+            source: { branch: 'main', path: '/' }
+          })
+        });
+      }
       await ghFetch(`/repos/${username}/${repoName}/pages/builds`, {
         method: 'POST'
       });
