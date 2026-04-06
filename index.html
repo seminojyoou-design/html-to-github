@@ -392,12 +392,17 @@ function parseRepoTag(text) {
 // ===== スマホ文字化け修正 =====
 function fixCode() {
   const textarea = document.getElementById('htmlInput');
-  let code = textarea.value;
-  if (!code.trim()) {
+  // テキストエリアが空ならフォーカスしてペーストを促す
+  if (!textarea.value.trim()) {
     textarea.focus();
-    showToast('HTMLを貼り付けてな！');
-    return;
+    // execCommandでペーストを試みる（Safari対応）
+    const pasted = document.execCommand('paste');
+    if (!pasted || !textarea.value.trim()) {
+      showToast('テキストエリアに長押しでペーストしてな！');
+      return;
+    }
   }
+  let code = textarea.value;
 
   let count = 0;
   const fixes = [
