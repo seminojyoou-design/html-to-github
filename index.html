@@ -452,7 +452,7 @@ async function upload() {
       await ghFetch(`/repos/${username}/${repoName}/pages`, {
         method: 'POST',
         body: JSON.stringify({
-          build_type: 'workflow',
+          build_type: 'legacy',
           source: { branch: 'main', path: '/' }
         })
       });
