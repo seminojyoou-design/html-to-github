@@ -606,12 +606,21 @@ async function upload() {
     // 4. GitHub Pages有効化 + ビルドトリガー
     showStatus('info', '<span class="spinner"></span>GitHub Pages有効化中...');
     try {
-      if (isNew) {
+      // Pagesが有効か確認、なければ有効化
+      let pagesOk = false;
+      try {
+        await ghFetch(`/repos/${username}/${repoName}/pages`);
+        pagesOk = true;
+      } catch (e) {}
+      if (!pagesOk) {
+        // デフォルトブランチを取得してPages有効化
+        const repo = await ghFetch(`/repos/${username}/${repoName}`);
+        const branch = repo.default_branch || 'main';
         await ghFetch(`/repos/${username}/${repoName}/pages`, {
           method: 'POST',
           body: JSON.stringify({
             build_type: 'legacy',
-            source: { branch: 'main', path: '/' }
+            source: { branch: branch, path: '/' }
           })
         });
       }
