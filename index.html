@@ -604,9 +604,6 @@ async function upload() {
     const repoUrl = `https://github.com/${username}/${repoName}`;
     showStatus('success', `✅ アップロード完了！`);
 
-    const urlEl = document.getElementById('pageUrl');
-    urlEl.href = pageUrl;
-    urlEl.textContent = pageUrl;
     urlBox.innerHTML = `
       <div style="font-size:12px; color:#8b949e; margin-bottom:4px;">🎉 公開URL（反映まで1-2分）:</div>
       <a href="${pageUrl}" target="_blank" style="color:#58a6ff; word-break:break-all; font-size:14px;">${pageUrl}</a>
