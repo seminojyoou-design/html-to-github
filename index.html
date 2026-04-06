@@ -260,7 +260,7 @@ input:focus { outline: none; border-color: #58a6ff; }
 </div>
 <div class="section settings" id="settingsPanel">
   <div class="section-title">GitHub Personal Access Token</div>
-  <a href="https://github.com/settings/personal-access-tokens/new" target="_blank" class="btn btn-secondary" style="display:block; text-align:center; text-decoration:none; margin-bottom:8px;">🔗 GitHubでトークンを作成</a>
+  <button class="btn btn-secondary" onclick="copyTokenUrl()" style="margin-bottom:8px;">🔗 トークン作成ページのURLをコピー</button>
   <p style="font-size:11px; color:#8b949e; margin-bottom:8px;">
     ↑ここからトークン作成ページに飛べるで！設定：<br>
     ・Repository access → All repositories<br>
@@ -347,6 +347,12 @@ function showToast(msg) {
 }
 
 // ===== Claudeプロンプトコピー =====
+function copyTokenUrl() {
+  navigator.clipboard.writeText('https://github.com/settings/personal-access-tokens/new').then(() => {
+    showToast('URLコピーしたで！Safariで貼り付けてな！');
+  });
+}
+
 function copyPrompt() {
   const prompt = `【絶対ルール】出力の1行目に必ず ---repo: リポジトリ名--- を書け。説明不要、この形式を厳守。2行目から<!DOCTYPE html>で始めること。
 
