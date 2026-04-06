@@ -89,6 +89,11 @@ input:focus { outline: none; border-color: #58a6ff; }
   color: #e6edf3;
   margin-top: 8px;
 }
+.btn-prompt {
+  background: linear-gradient(135deg, #bc8cff, #a371f7);
+  color: white;
+  margin-top: 8px;
+}
 .fix-count {
   text-align: center;
   font-size: 13px;
@@ -209,6 +214,33 @@ input:focus { outline: none; border-color: #58a6ff; }
   margin-right: 6px;
 }
 @keyframes spin { to { transform: rotate(360deg); } }
+.parsed-info {
+  margin-top: 8px;
+  padding: 10px;
+  background: #0d2818;
+  border: 1px solid #238636;
+  border-radius: 8px;
+  font-size: 13px;
+  color: #3fb950;
+  display: none;
+}
+.prompt-toast {
+  position: fixed;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #238636;
+  color: white;
+  padding: 12px 24px;
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 600;
+  z-index: 999;
+  opacity: 0;
+  transition: opacity 0.3s;
+  pointer-events: none;
+}
+.prompt-toast.show { opacity: 1; }
 </style>
 </head>
 <body>
@@ -236,12 +268,25 @@ input:focus { outline: none; border-color: #58a6ff; }
   </p>
 </div>
 
+<!-- Claudeプロンプトコピー -->
+<div class="section">
+  <div class="section-title">🤖 Claudeにお願いする用</div>
+  <p style="font-size:12px; color:#8b949e; margin-bottom:8px;">
+    HTMLを作ってもらうとき、このプロンプトを最後に付けるとリポジトリ名ごとコピペ1回で済むで！
+  </p>
+  <button class="btn btn-prompt" onclick="copyPrompt()">📋 プロンプトをコピー</button>
+</div>
+
 <!-- STEP 1: HTML貼り付け -->
 <div class="section">
-  <div class="section-title">📋 STEP 1: HTMLを貼り付け</div>
-  <textarea id="htmlInput" placeholder="ここにHTMLをペースト..."></textarea>
-  <button class="btn btn-fix" onclick="fixCode()">🔧 スマホ文字化け修正</button>
+  <div class="section-title">📋 STEP 1: HTMLを貼り付け（リポジトリ名付きもOK）</div>
+  <textarea id="htmlInput" placeholder="ここにHTMLをペースト...
+
+---repo: my-app-name---
+の形式が含まれてたら自動でリポジトリ名を分離するで！"></textarea>
+  <button class="btn btn-fix" onclick="fixCode()">🔧 スマホ文字化け修正＆自動分離</button>
   <div class="fix-count" id="fixCount"></div>
+  <div class="parsed-info" id="parsedInfo"></div>
 </div>
 
 <!-- STEP 2: リポジトリ名 -->
@@ -272,6 +317,9 @@ input:focus { outline: none; border-color: #58a6ff; }
   <iframe class="preview-frame" id="previewFrame" sandbox="allow-scripts"></iframe>
 </div>
 
+<!-- トースト -->
+<div class="prompt-toast" id="toast">コピーしたで！</div>
+
 <script>
 // ===== トークン管理 =====
 function getToken() { return localStorage.getItem('gh_token') || ''; }
@@ -295,6 +343,54 @@ function updateTokenStatus() {
 function toggleSettings() {
   const panel = document.getElementById('settingsPanel');
   panel.classList.toggle('show');
+}
+
+// ===== トースト表示 =====
+function showToast(msg) {
+  const toast = document.getElementById('toast');
+  toast.textContent = msg;
+  toast.classList.add('show');
+  setTimeout(() => toast.classList.remove('show'), 2000);
+}
+
+// ===== Claudeプロンプトコピー =====
+function copyPrompt() {
+  const prompt = `コードの最初の行に以下の形式でリポジトリ名をつけてください：
+---repo: リポジトリ名---
+
+リポジトリ名のルール：
+- 英語、小文字、ハイフン区切り
+- 短く、アプリの内容がわかる名前
+- 例: ---repo: pixel-art-editor---
+
+その後に<!DOCTYPE html>から始めてください。`;
+
+  navigator.clipboard.writeText(prompt).then(() => {
+    showToast('📋 プロンプトコピーしたで！');
+  });
+}
+
+// ===== リポジトリ名の分離 =====
+function parseRepoTag(text) {
+  // ---repo: xxx--- を検出（行頭・行中・前後の空白対応）
+  const patterns = [
+    /^---\s*repo:\s*(.+?)\s*---\s*\n?/im,
+    /\n---\s*repo:\s*(.+?)\s*---\s*\n?/im,
+  ];
+
+  for (const pattern of patterns) {
+    const match = text.match(pattern);
+    if (match) {
+      const repoName = match[1].trim()
+        .toLowerCase()
+        .replace(/[^a-z0-9-]/g, '-')
+        .replace(/-+/g, '-')
+        .replace(/^-|-$/g, '');
+      const html = text.replace(match[0], '').trim();
+      return { repoName, html, found: true };
+    }
+  }
+  return { repoName: null, html: text, found: false };
 }
 
 // ===== スマホ文字化け修正 =====
@@ -347,7 +443,21 @@ function fixCode() {
     code = code.replace(pattern, replacement);
   }
 
-  textarea.value = code;
+  // リポジトリ名タグの分離
+  const parsed = parseRepoTag(code);
+  const infoEl = document.getElementById('parsedInfo');
+
+  if (parsed.found) {
+    textarea.value = parsed.html;
+    document.getElementById('repoName').value = parsed.repoName;
+    infoEl.textContent = `🏷️ リポジトリ名を検出: ${parsed.repoName}`;
+    infoEl.style.display = 'block';
+  } else {
+    textarea.value = code;
+    infoEl.style.display = 'none';
+    autoName();
+  }
+
   const el = document.getElementById('fixCount');
   if (count > 0) {
     el.textContent = `✅ ${count}箇所 修正したで！`;
@@ -358,23 +468,42 @@ function fixCode() {
   }
 
   updateSteps(2);
-  autoName();
 }
 
 // ===== リポジトリ名自動生成 =====
 function autoName() {
   const code = document.getElementById('htmlInput').value;
-  const titleMatch = code.match(/<title[^>]*>([^<]+)<\/title>/i);
   let name = '';
+
+  // 1. <title>から取得
+  const titleMatch = code.match(/<title[^>]*>([^<]+)<\/title>/i);
   if (titleMatch) {
-    name = titleMatch[1].trim()
-      .toLowerCase()
+    name = titleMatch[1].trim();
+  }
+
+  // 2. <h1>から取得
+  if (!name) {
+    const h1Match = code.match(/<h1[^>]*>([^<]+)<\/h1>/i);
+    if (h1Match) name = h1Match[1].trim();
+  }
+
+  // 3. <meta description>から取得
+  if (!name) {
+    const metaMatch = code.match(/<meta\s+name=["']description["']\s+content=["']([^"']+)["']/i);
+    if (metaMatch) name = metaMatch[1].trim();
+  }
+
+  // 名前を正規化
+  if (name) {
+    name = name.toLowerCase()
       .replace(/[^\w\s\u3000-\u9fff\uff00-\uffef-]/g, '')
       .replace(/[\s\u3000]+/g, '-')
       .replace(/-+/g, '-')
       .replace(/^-|-$/g, '')
       .substring(0, 50);
   }
+
+  // 4. 何もなければ日付
   if (!name) {
     const date = new Date();
     name = `html-app-${date.getFullYear()}${String(date.getMonth()+1).padStart(2,'0')}${String(date.getDate()).padStart(2,'0')}-${String(date.getHours()).padStart(2,'0')}${String(date.getMinutes()).padStart(2,'0')}`;
@@ -496,7 +625,7 @@ function showStatus(type, msg) {
 
 function copyUrl(url) {
   navigator.clipboard.writeText(url).then(() => {
-    alert('URLコピーしたで！');
+    showToast('URLコピーしたで！');
   });
 }
 
@@ -522,6 +651,7 @@ updateTokenStatus();
 document.getElementById('htmlInput').addEventListener('input', () => {
   updateSteps(1);
   document.getElementById('fixCount').textContent = '';
+  document.getElementById('parsedInfo').style.display = 'none';
 });
 </script>
 
