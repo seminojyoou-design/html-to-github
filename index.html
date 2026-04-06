@@ -272,11 +272,9 @@ input:focus { outline: none; border-color: #58a6ff; }
 <div class="section">
   <div class="section-title">📋 STEP 1: HTMLを貼り付け（リポジトリ名付きもOK）</div>
   <button class="btn btn-prompt" onclick="copyPrompt()" style="margin-bottom:8px;">🤖 Claudeにリポジトリ名付きで出力させるプロンプトをコピー</button>
-  <textarea id="htmlInput" placeholder="ここにHTMLをペースト...
-
----repo: my-app-name---
-の形式が含まれてたら自動でリポジトリ名を分離するで！"></textarea>
-  <button class="btn btn-fix" onclick="fixCode()">🔧 コード修正＆自動分離</button>
+  <textarea id="htmlInput" placeholder="ここにHTMLをペースト..."></textarea>
+  <button class="btn btn-prompt" onclick="pasteCode()" style="margin-bottom:6px;">① 📋 ペースト</button>
+  <button class="btn btn-fix" onclick="fixCode()">② 🔧 コード修正＆自動分離</button>
   <div class="fix-count" id="fixCount"></div>
   <div class="parsed-info" id="parsedInfo"></div>
   <button class="btn btn-secondary" onclick="resetAll()" style="background:#da3633; margin-top:8px;">🗑️ 全リセット</button>
@@ -389,20 +387,29 @@ function parseRepoTag(text) {
   return { repoName: null, html: text, found: false };
 }
 
+// ===== ペースト =====
+async function pasteCode() {
+  const textarea = document.getElementById('htmlInput');
+  try {
+    const clip = await navigator.clipboard.readText();
+    if (clip && clip.trim()) {
+      textarea.value = clip;
+      showToast('ペーストしたで！次は②を押してな！');
+    }
+  } catch (e) {
+    textarea.focus();
+    showToast('長押しでペーストしてな！');
+  }
+}
+
 // ===== スマホ文字化け修正 =====
 function fixCode() {
   const textarea = document.getElementById('htmlInput');
-  // テキストエリアが空ならフォーカスしてペーストを促す
-  if (!textarea.value.trim()) {
-    textarea.focus();
-    // execCommandでペーストを試みる（Safari対応）
-    const pasted = document.execCommand('paste');
-    if (!pasted || !textarea.value.trim()) {
-      showToast('テキストエリアに長押しでペーストしてな！');
-      return;
-    }
-  }
   let code = textarea.value;
+  if (!code.trim()) {
+    showToast('先に①でペーストしてな！');
+    return;
+  }
 
   let count = 0;
   const fixes = [
