@@ -3,10 +3,10 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-<title>HTML→GitHub 自動アップローダー</title>
+<title>楽git</title>
 <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🚀</text></svg>">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-title" content="HTML→Git">
+<meta name="apple-mobile-web-app-title" content="楽git">
 <style>
 * { margin: 0; padding: 0; box-sizing: border-box; }
 body {
@@ -245,7 +245,7 @@ input:focus { outline: none; border-color: #58a6ff; }
 </head>
 <body>
 
-<h1>🚀 HTML → GitHub</h1>
+<h1>🚀 楽git</h1>
 
 <div class="step-indicator">
   <div class="step active" id="step1">1</div>
@@ -260,12 +260,15 @@ input:focus { outline: none; border-color: #58a6ff; }
 </div>
 <div class="section settings" id="settingsPanel">
   <div class="section-title">GitHub Personal Access Token</div>
-  <input type="password" id="tokenInput" placeholder="ghp_xxxxxxxxxxxx">
-  <button class="btn btn-secondary" onclick="saveToken()">トークン保存</button>
-  <p style="font-size:11px; color:#8b949e; margin-top:8px;">
-    GitHub → Settings → Developer settings → Personal access tokens → Fine-grained tokens<br>
-    権限: Contents (Read/Write), Pages (Read/Write), Administration (Read/Write)
+  <a href="https://github.com/settings/personal-access-tokens/new" target="_blank" class="btn btn-secondary" style="display:block; text-align:center; text-decoration:none; margin-bottom:8px;">🔗 GitHubでトークンを作成</a>
+  <p style="font-size:11px; color:#8b949e; margin-bottom:8px;">
+    ↑ここからトークン作成ページに飛べるで！設定：<br>
+    ・Repository access → All repositories<br>
+    ・Permissions → Contents, Pages, Administration を全部 Read and Write<br>
+    ・作成したらトークンをコピーして↓に貼り付け
   </p>
+  <input type="password" id="tokenInput" placeholder="github_pat_xxxxxxxxxxxx">
+  <button class="btn btn-secondary" onclick="saveToken()">トークン保存</button>
 </div>
 
 <!-- STEP 1: HTML貼り付け -->
