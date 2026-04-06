@@ -268,25 +268,18 @@ input:focus { outline: none; border-color: #58a6ff; }
   </p>
 </div>
 
-<!-- Claudeプロンプトコピー -->
-<div class="section">
-  <div class="section-title">🤖 Claudeにお願いする用</div>
-  <p style="font-size:12px; color:#8b949e; margin-bottom:8px;">
-    HTMLを作ってもらうとき、このプロンプトを最後に付けるとリポジトリ名ごとコピペ1回で済むで！
-  </p>
-  <button class="btn btn-prompt" onclick="copyPrompt()">📋 プロンプトをコピー</button>
-</div>
-
 <!-- STEP 1: HTML貼り付け -->
 <div class="section">
   <div class="section-title">📋 STEP 1: HTMLを貼り付け（リポジトリ名付きもOK）</div>
+  <button class="btn btn-prompt" onclick="copyPrompt()" style="margin-bottom:8px;">🤖 Claudeにリポジトリ名付きで出力させるプロンプトをコピー</button>
   <textarea id="htmlInput" placeholder="ここにHTMLをペースト...
 
 ---repo: my-app-name---
 の形式が含まれてたら自動でリポジトリ名を分離するで！"></textarea>
-  <button class="btn btn-fix" onclick="fixCode()">🔧 スマホ文字化け修正＆自動分離</button>
+  <button class="btn btn-fix" onclick="fixCode()">🔧 コード修正＆自動分離＆ペースト</button>
   <div class="fix-count" id="fixCount"></div>
   <div class="parsed-info" id="parsedInfo"></div>
+  <button class="btn btn-secondary" onclick="resetAll()" style="background:#da3633; margin-top:8px;">🗑️ 全リセット</button>
 </div>
 
 <!-- STEP 2: リポジトリ名 -->
@@ -315,11 +308,6 @@ input:focus { outline: none; border-color: #58a6ff; }
   <div class="section-title">👀 プレビュー</div>
   <button class="btn btn-secondary" onclick="preview()" style="margin-bottom:8px;">プレビュー表示</button>
   <iframe class="preview-frame" id="previewFrame" sandbox="allow-scripts"></iframe>
-</div>
-
-<!-- リセット -->
-<div style="text-align:center; margin-top:8px;">
-  <button class="btn btn-secondary" onclick="resetAll()" style="width:auto; padding:10px 24px; background:#da3633; font-size:13px;">🗑️ 全リセット</button>
 </div>
 
 <!-- トースト -->
