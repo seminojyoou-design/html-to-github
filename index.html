@@ -555,30 +555,33 @@ async function upload() {
     const user = await ghFetch('/user');
     const username = user.login;
 
-    // 2. リポジトリ作成
+    // 2. リポジトリ作成（auto_init: trueでmainブランチを確実に作る）
     showStatus('info', '<span class="spinner"></span>リポジトリ作成中...');
     await ghFetch('/user/repos', {
       method: 'POST',
       body: JSON.stringify({
         name: repoName,
         description: 'Created with HTML→GitHub Uploader',
-        auto_init: false,
+        auto_init: true,
         private: false
       })
     });
 
-    // 3. index.htmlをプッシュ
+    // 少し待ってからファイルPUT（リポジトリ初期化完了を待つ）
+    await new Promise(r => setTimeout(r, 1500));
+
+    // 3. index.htmlをプッシュ（既存のREADMEのSHAは不要、新規ファイル）
     showStatus('info', '<span class="spinner"></span>ファイルアップロード中...');
     const content = btoa(unescape(encodeURIComponent(code)));
     await ghFetch(`/repos/${username}/${repoName}/contents/index.html`, {
       method: 'PUT',
       body: JSON.stringify({
-        message: 'Initial commit - uploaded via HTML→GitHub',
+        message: 'Upload via HTML→GitHub',
         content: content
       })
     });
 
-    // 4. GitHub Pages有効化
+    // 4. GitHub Pages有効化 + ビルドトリガー
     showStatus('info', '<span class="spinner"></span>GitHub Pages有効化中...');
     try {
       await ghFetch(`/repos/${username}/${repoName}/pages`, {
@@ -588,8 +591,11 @@ async function upload() {
           source: { branch: 'main', path: '/' }
         })
       });
+      // ビルドを明示的にトリガー
+      await ghFetch(`/repos/${username}/${repoName}/pages/builds`, {
+        method: 'POST'
+      });
     } catch (e) {
-      // Pages APIが使えない場合もあるのでエラーは無視
       console.log('Pages API error (non-fatal):', e);
     }
 
