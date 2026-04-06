@@ -1,0 +1,529 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>HTML→GitHub 自動アップローダー</title>
+<link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🚀</text></svg>">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="HTML→Git">
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+  background: #0d1117;
+  color: #e6edf3;
+  min-height: 100vh;
+  padding: 16px;
+  padding-bottom: 80px;
+}
+h1 {
+  font-size: 20px;
+  text-align: center;
+  margin-bottom: 16px;
+  background: linear-gradient(135deg, #58a6ff, #bc8cff);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+.section {
+  background: #161b22;
+  border: 1px solid #30363d;
+  border-radius: 12px;
+  padding: 16px;
+  margin-bottom: 12px;
+}
+.section-title {
+  font-size: 13px;
+  color: #8b949e;
+  margin-bottom: 8px;
+  font-weight: 600;
+}
+textarea {
+  width: 100%;
+  min-height: 200px;
+  background: #0d1117;
+  color: #e6edf3;
+  border: 1px solid #30363d;
+  border-radius: 8px;
+  padding: 12px;
+  font-family: 'SF Mono', 'Menlo', monospace;
+  font-size: 13px;
+  resize: vertical;
+  -webkit-appearance: none;
+}
+textarea:focus { outline: none; border-color: #58a6ff; }
+input[type="text"], input[type="password"] {
+  width: 100%;
+  background: #0d1117;
+  color: #e6edf3;
+  border: 1px solid #30363d;
+  border-radius: 8px;
+  padding: 10px 12px;
+  font-size: 15px;
+  -webkit-appearance: none;
+}
+input:focus { outline: none; border-color: #58a6ff; }
+.btn {
+  width: 100%;
+  padding: 14px;
+  border: none;
+  border-radius: 10px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity 0.2s;
+  -webkit-tap-highlight-color: transparent;
+}
+.btn:active { opacity: 0.7; }
+.btn-primary {
+  background: linear-gradient(135deg, #238636, #2ea043);
+  color: white;
+}
+.btn-fix {
+  background: linear-gradient(135deg, #58a6ff, #388bfd);
+  color: white;
+  margin-bottom: 8px;
+}
+.btn-secondary {
+  background: #30363d;
+  color: #e6edf3;
+  margin-top: 8px;
+}
+.fix-count {
+  text-align: center;
+  font-size: 13px;
+  color: #58a6ff;
+  margin-top: 6px;
+  min-height: 18px;
+}
+.repo-name-row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+.repo-name-row input { flex: 1; }
+.btn-auto {
+  background: #30363d;
+  color: #8b949e;
+  border: none;
+  border-radius: 8px;
+  padding: 10px 14px;
+  font-size: 13px;
+  white-space: nowrap;
+  cursor: pointer;
+}
+.status {
+  margin-top: 12px;
+  padding: 12px;
+  border-radius: 8px;
+  font-size: 14px;
+  display: none;
+}
+.status.success {
+  display: block;
+  background: #0d2818;
+  border: 1px solid #238636;
+  color: #3fb950;
+}
+.status.error {
+  display: block;
+  background: #2d1117;
+  border: 1px solid #da3633;
+  color: #f85149;
+}
+.status.info {
+  display: block;
+  background: #0d1d31;
+  border: 1px solid #1f6feb;
+  color: #58a6ff;
+}
+.url-box {
+  margin-top: 12px;
+  padding: 12px;
+  background: #0d2818;
+  border: 1px solid #238636;
+  border-radius: 8px;
+  display: none;
+}
+.url-box a {
+  color: #58a6ff;
+  word-break: break-all;
+  font-size: 14px;
+}
+.token-saved {
+  font-size: 12px;
+  color: #3fb950;
+  margin-top: 4px;
+}
+.settings-toggle {
+  text-align: center;
+  margin-bottom: 12px;
+}
+.settings-toggle button {
+  background: none;
+  border: none;
+  color: #8b949e;
+  font-size: 13px;
+  cursor: pointer;
+  text-decoration: underline;
+}
+.settings { display: none; }
+.settings.show { display: block; }
+.preview-frame {
+  width: 100%;
+  height: 300px;
+  border: 1px solid #30363d;
+  border-radius: 8px;
+  background: white;
+  margin-top: 8px;
+}
+.step-indicator {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+.step {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  font-weight: 600;
+  background: #30363d;
+  color: #8b949e;
+}
+.step.active { background: #238636; color: white; }
+.step.done { background: #238636; color: white; }
+.spinner {
+  display: inline-block;
+  width: 16px;
+  height: 16px;
+  border: 2px solid #30363d;
+  border-top-color: #58a6ff;
+  border-radius: 50%;
+  animation: spin 0.6s linear infinite;
+  vertical-align: middle;
+  margin-right: 6px;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+</style>
+</head>
+<body>
+
+<h1>🚀 HTML → GitHub</h1>
+
+<div class="step-indicator">
+  <div class="step active" id="step1">1</div>
+  <div class="step" id="step2">2</div>
+  <div class="step" id="step3">3</div>
+</div>
+
+<!-- 設定 -->
+<div class="settings-toggle">
+  <button onclick="toggleSettings()">⚙️ GitHub設定</button>
+  <span class="token-saved" id="tokenStatus"></span>
+</div>
+<div class="section settings" id="settingsPanel">
+  <div class="section-title">GitHub Personal Access Token</div>
+  <input type="password" id="tokenInput" placeholder="ghp_xxxxxxxxxxxx">
+  <button class="btn btn-secondary" onclick="saveToken()">トークン保存</button>
+  <p style="font-size:11px; color:#8b949e; margin-top:8px;">
+    GitHub → Settings → Developer settings → Personal access tokens → Fine-grained tokens<br>
+    権限: Contents (Read/Write), Pages (Read/Write), Administration (Read/Write)
+  </p>
+</div>
+
+<!-- STEP 1: HTML貼り付け -->
+<div class="section">
+  <div class="section-title">📋 STEP 1: HTMLを貼り付け</div>
+  <textarea id="htmlInput" placeholder="ここにHTMLをペースト..."></textarea>
+  <button class="btn btn-fix" onclick="fixCode()">🔧 スマホ文字化け修正</button>
+  <div class="fix-count" id="fixCount"></div>
+</div>
+
+<!-- STEP 2: リポジトリ名 -->
+<div class="section">
+  <div class="section-title">📁 STEP 2: リポジトリ名</div>
+  <div class="repo-name-row">
+    <input type="text" id="repoName" placeholder="my-awesome-app">
+    <button class="btn-auto" onclick="autoName()">自動</button>
+  </div>
+</div>
+
+<!-- STEP 3: アップロード -->
+<div class="section">
+  <div class="section-title">🚀 STEP 3: アップロード</div>
+  <button class="btn btn-primary" id="uploadBtn" onclick="upload()">GitHubにアップ</button>
+  <div class="status" id="status"></div>
+  <div class="url-box" id="urlBox">
+    <div style="font-size:12px; color:#8b949e; margin-bottom:4px;">🎉 公開URL:</div>
+    <a id="pageUrl" href="#" target="_blank"></a>
+    <button class="btn btn-secondary" onclick="copyUrl()" style="margin-top:8px; padding:10px;">📋 URLコピー</button>
+  </div>
+</div>
+
+<!-- プレビュー -->
+<div class="section">
+  <div class="section-title">👀 プレビュー</div>
+  <button class="btn btn-secondary" onclick="preview()" style="margin-bottom:8px;">プレビュー表示</button>
+  <iframe class="preview-frame" id="previewFrame" sandbox="allow-scripts"></iframe>
+</div>
+
+<script>
+// ===== トークン管理 =====
+function getToken() { return localStorage.getItem('gh_token') || ''; }
+function saveToken() {
+  const token = document.getElementById('tokenInput').value.trim();
+  if (!token) return;
+  localStorage.setItem('gh_token', token);
+  document.getElementById('tokenInput').value = '';
+  updateTokenStatus();
+  toggleSettings();
+}
+function updateTokenStatus() {
+  const el = document.getElementById('tokenStatus');
+  if (getToken()) {
+    el.textContent = '✅ トークン設定済み';
+  } else {
+    el.textContent = '❌ 未設定';
+  }
+}
+
+function toggleSettings() {
+  const panel = document.getElementById('settingsPanel');
+  panel.classList.toggle('show');
+}
+
+// ===== スマホ文字化け修正 =====
+function fixCode() {
+  const textarea = document.getElementById('htmlInput');
+  let code = textarea.value;
+  if (!code.trim()) return;
+
+  let count = 0;
+  const fixes = [
+    // スマート引用符 → 通常引用符
+    [/\u201C/g, '"'],   // "
+    [/\u201D/g, '"'],   // "
+    [/\u2018/g, "'"],   // '
+    [/\u2019/g, "'"],   // '
+    // スマートアポストロフィ
+    [/\u02BC/g, "'"],   // ʼ
+    // 全角スペース → 半角
+    [/\u3000/g, ' '],
+    // ノーブレークスペース → 半角
+    [/\u00A0/g, ' '],
+    // 全角記号 → 半角
+    [/\uFF1A/g, ':'],   // ：
+    [/\uFF1B/g, ';'],   // ；
+    [/\uFF08/g, '('],   // （
+    [/\uFF09/g, ')'],   // ）
+    [/\uFF1C/g, '<'],   // ＜
+    [/\uFF1E/g, '>'],   // ＞
+    [/\uFF0F/g, '/'],   // ／
+    [/\uFF3B/g, '['],   // ［
+    [/\uFF3D/g, ']'],   // ］
+    [/\uFF5B/g, '{'],   // ｛
+    [/\uFF5D/g, '}'],   // ｝
+    [/\uFF1D/g, '='],   // ＝
+    [/\uFF0B/g, '+'],   // ＋
+    [/\uFF0D/g, '-'],   // ー（全角ハイフン）
+    // ダッシュ類 → ハイフン
+    [/\u2013/g, '-'],   // en-dash
+    [/\u2014/g, '-'],   // em-dash
+    // 三点リーダ → ...
+    [/\u2026/g, '...'],
+    // CRLF正規化
+    [/\r\n/g, '\n'],
+    [/\r/g, '\n'],
+  ];
+
+  for (const [pattern, replacement] of fixes) {
+    const matches = code.match(pattern);
+    if (matches) count += matches.length;
+    code = code.replace(pattern, replacement);
+  }
+
+  textarea.value = code;
+  const el = document.getElementById('fixCount');
+  if (count > 0) {
+    el.textContent = `✅ ${count}箇所 修正したで！`;
+    el.style.color = '#3fb950';
+  } else {
+    el.textContent = '✨ 修正不要やったで！キレイなコードや';
+    el.style.color = '#58a6ff';
+  }
+
+  updateSteps(2);
+  autoName();
+}
+
+// ===== リポジトリ名自動生成 =====
+function autoName() {
+  const code = document.getElementById('htmlInput').value;
+  const titleMatch = code.match(/<title[^>]*>([^<]+)<\/title>/i);
+  let name = '';
+  if (titleMatch) {
+    name = titleMatch[1].trim()
+      .toLowerCase()
+      .replace(/[^\w\s\u3000-\u9fff\uff00-\uffef-]/g, '')
+      .replace(/[\s\u3000]+/g, '-')
+      .replace(/-+/g, '-')
+      .replace(/^-|-$/g, '')
+      .substring(0, 50);
+  }
+  if (!name) {
+    const date = new Date();
+    name = `html-app-${date.getFullYear()}${String(date.getMonth()+1).padStart(2,'0')}${String(date.getDate()).padStart(2,'0')}-${String(date.getHours()).padStart(2,'0')}${String(date.getMinutes()).padStart(2,'0')}`;
+  }
+  document.getElementById('repoName').value = name;
+}
+
+// ===== GitHub API =====
+async function ghFetch(endpoint, options = {}) {
+  const token = getToken();
+  const res = await fetch(`https://api.github.com${endpoint}`, {
+    ...options,
+    headers: {
+      'Authorization': `Bearer ${token}`,
+      'Accept': 'application/vnd.github+json',
+      'X-GitHub-Api-Version': '2022-11-28',
+      'Content-Type': 'application/json',
+      ...(options.headers || {})
+    }
+  });
+  const data = await res.json().catch(() => null);
+  if (!res.ok) throw new Error(data?.message || `HTTP ${res.status}`);
+  return data;
+}
+
+async function upload() {
+  const token = getToken();
+  const code = document.getElementById('htmlInput').value.trim();
+  const repoName = document.getElementById('repoName').value.trim();
+  const statusEl = document.getElementById('status');
+  const urlBox = document.getElementById('urlBox');
+  const uploadBtn = document.getElementById('uploadBtn');
+
+  // バリデーション
+  if (!token) { showStatus('error', '⚙️ 先にGitHubトークンを設定してな！'); toggleSettings(); return; }
+  if (!code) { showStatus('error', '📋 HTMLを貼り付けてな！'); return; }
+  if (!repoName) { showStatus('error', '📁 リポジトリ名を入れてな！'); return; }
+
+  uploadBtn.disabled = true;
+  uploadBtn.textContent = 'アップロード中...';
+  urlBox.style.display = 'none';
+
+  try {
+    // 1. ユーザー名取得
+    showStatus('info', '<span class="spinner"></span>ユーザー情報取得中...');
+    const user = await ghFetch('/user');
+    const username = user.login;
+
+    // 2. リポジトリ作成
+    showStatus('info', '<span class="spinner"></span>リポジトリ作成中...');
+    await ghFetch('/user/repos', {
+      method: 'POST',
+      body: JSON.stringify({
+        name: repoName,
+        description: 'Created with HTML→GitHub Uploader',
+        auto_init: false,
+        private: false
+      })
+    });
+
+    // 3. index.htmlをプッシュ
+    showStatus('info', '<span class="spinner"></span>ファイルアップロード中...');
+    const content = btoa(unescape(encodeURIComponent(code)));
+    await ghFetch(`/repos/${username}/${repoName}/contents/index.html`, {
+      method: 'PUT',
+      body: JSON.stringify({
+        message: 'Initial commit - uploaded via HTML→GitHub',
+        content: content
+      })
+    });
+
+    // 4. GitHub Pages有効化
+    showStatus('info', '<span class="spinner"></span>GitHub Pages有効化中...');
+    try {
+      await ghFetch(`/repos/${username}/${repoName}/pages`, {
+        method: 'POST',
+        body: JSON.stringify({
+          build_type: 'workflow',
+          source: { branch: 'main', path: '/' }
+        })
+      });
+    } catch (e) {
+      // Pages APIが使えない場合もあるのでエラーは無視
+      console.log('Pages API error (non-fatal):', e);
+    }
+
+    // 成功
+    const pageUrl = `https://${username}.github.io/${repoName}/`;
+    const repoUrl = `https://github.com/${username}/${repoName}`;
+    showStatus('success', `✅ アップロード完了！`);
+
+    const urlEl = document.getElementById('pageUrl');
+    urlEl.href = pageUrl;
+    urlEl.textContent = pageUrl;
+    urlBox.innerHTML = `
+      <div style="font-size:12px; color:#8b949e; margin-bottom:4px;">🎉 公開URL（反映まで1-2分）:</div>
+      <a href="${pageUrl}" target="_blank" style="color:#58a6ff; word-break:break-all; font-size:14px;">${pageUrl}</a>
+      <div style="margin-top:8px; font-size:12px;">
+        <a href="${repoUrl}" target="_blank" style="color:#8b949e;">📂 リポジトリ: ${repoUrl}</a>
+      </div>
+      <button class="btn btn-secondary" onclick="copyUrl('${pageUrl}')" style="margin-top:8px; padding:10px;">📋 URLコピー</button>
+    `;
+    urlBox.style.display = 'block';
+    updateSteps(3);
+
+  } catch (err) {
+    showStatus('error', `❌ エラー: ${err.message}`);
+  } finally {
+    uploadBtn.disabled = false;
+    uploadBtn.textContent = 'GitHubにアップ';
+  }
+}
+
+function showStatus(type, msg) {
+  const el = document.getElementById('status');
+  el.className = `status ${type}`;
+  el.innerHTML = msg;
+}
+
+function copyUrl(url) {
+  navigator.clipboard.writeText(url).then(() => {
+    alert('URLコピーしたで！');
+  });
+}
+
+function preview() {
+  const code = document.getElementById('htmlInput').value;
+  const frame = document.getElementById('previewFrame');
+  frame.srcdoc = code;
+}
+
+function updateSteps(current) {
+  for (let i = 1; i <= 3; i++) {
+    const el = document.getElementById(`step${i}`);
+    el.className = 'step';
+    if (i < current) el.classList.add('done');
+    if (i === current) el.classList.add('active');
+  }
+}
+
+// ===== 初期化 =====
+updateTokenStatus();
+
+// テキストエリア変更検知
+document.getElementById('htmlInput').addEventListener('input', () => {
+  updateSteps(1);
+  document.getElementById('fixCount').textContent = '';
+});
+</script>
+
+</body>
+</html>
