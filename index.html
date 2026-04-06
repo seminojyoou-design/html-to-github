@@ -576,7 +576,7 @@ async function upload() {
       isNew = true;
       await new Promise(r => setTimeout(r, 1500));
     } catch (e) {
-      if (e.message.includes('already exists')) {
+      if (e.message.includes('already exists') || e.message.includes('creation failed')) {
         showStatus('info', '<span class="spinner"></span>既存リポジトリに上書き中...');
       } else {
         throw e;
